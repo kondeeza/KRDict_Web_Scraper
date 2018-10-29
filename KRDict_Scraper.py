@@ -1,9 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
+import csv
 
 
 def testgetwebpage():
-    page = requests.get("http://dataquestio.github.io/web-scraping-pages/simple.html")
+    page = requests.get("https://krdict.korean.go.kr/jpn/dicSearchDetail/searchDetailWordsResult?nation=jpn&nationCode=7&searchFlag=Y&sort=W&currentPage=1&ParaWordNo=&syllablePosition=&actCategoryList=&all_gubun=ALL&gubun=W&gubun=P&gubun=E&all_wordNativeCode=ALL&wordNativeCode=1&wordNativeCode=2&wordNativeCode=3&wordNativeCode=0&sp_code=14&all_imcnt=ALL&imcnt=1&imcnt=2&imcnt=3&imcnt=0&all_multimedia=ALL&multimedia=P&multimedia=I&multimedia=V&multimedia=A&multimedia=S&multimedia=N&searchSyllableStart=&searchSyllableEnd=&searchOp=AND&searchTarget=word&searchOrglanguage=-1&wordCondition=wordAll&query=&blockCount=100")
     print(page.status_code)
 
     "page.content"
@@ -13,6 +14,28 @@ def testgetwebpage():
     print(soup.prettify())
 
     print(list(soup.children))
+
+
+
+
+def savetocsv(fotmatted_defentries,mode):
+    """
+    :param fotmatted_defentries:
+    :param mode:  either "w" or "a"  (overwrite and append)
+    :return:
+    """
+    # open a csv file with append, so old data will not be erased
+
+    with open("index.csv", mode, encoding="utf-8", newline='') as csv_file:
+        writer = csv.writer(csv_file, delimiter='\t')
+        if (mode=='w'):
+            writer.writerow(['word', 'jp_defs','pos', 'hanja', 'jp_trans', 'kr_trans'])
+
+        for defentry in fotmatted_defentries:
+            "print(defentry)"
+            "writer.writerow([defentry['word'], defentry['jp_defs'], defentry['pos'], defentry['hanja'], defentry['jp_trans'], defentry['kr_trans'] ])"
+            writer.writerow([defentry['word'], defentry['jp_defs'], defentry['pos'], defentry['hanja'], defentry['jp_trans'] ])
+
 
 
 def setJP_def(defentry_parent):
@@ -58,10 +81,12 @@ def setKR_translation(defentry_parent):
     krtranslations = defentry_parent.find_all('p', {'class': 'sub_p1'})
     formatted_krtrans = ""
     if krtranslations:
+
         for kr_tran in krtranslations:
-            if formatted_krtrans:
-                formatted_krtrans +=" "
-            formatted_krtrans += kr_tran.get_text().replace('\n','').replace('\t','')
+            if kr_tran.has_attr('style'):
+                if formatted_krtrans:
+                    formatted_krtrans +=" "
+                formatted_krtrans += kr_tran.get_text().replace('\n','').replace('\t','')
 
     return formatted_krtrans
 
@@ -72,25 +97,28 @@ def setHanja(defentry):
     return ""
 
 
-def testgetlocalpage():
-    soup = BeautifulSoup(open("krdict_general_sample.htm", 'r', encoding="utf-8"), "html.parser")
+def getDefFrom_localpage():
+    soup = BeautifulSoup(open("KRDict_JP_All_Except_Noun_Verb_Eomi_PartOfSpeech_.htm", 'r', encoding="utf-8"), "html.parser")
     defdiv = soup.find('ul', {'class': 'search_list'})
     fotmatted_defentries = []
     defentries = soup.find_all('a', {'title': '詳細表示'})
     for defentry in defentries:
         defobj = {}
         defentry_parent = defentry.parent.parent
-        defobj['word'] = defentry.get_text()
+        defobj['word'] = defentry.get_text().replace('\t','').replace(' ','')
         defobj['hanja'] = setHanja(defentry)
-        defobj['pos'] = defentry.find_next_sibling("em").get_text() if defentry.find_next_sibling("em") else ""
+        defobj['pos'] = defentry.find_next_sibling("em").get_text().replace('\t','') if defentry.find_next_sibling("em") else ""
         defobj['jp_defs'] = setJP_def(defentry_parent)
         defobj['jp_trans'] = setJP_translation(defentry_parent)
         defobj['kr_trans'] = setKR_translation(defentry_parent)
 
 
         fotmatted_defentries.append(defobj)
-        print(defobj)
+        "print(defobj)"
 
-    "print(defdiv.contents[3])"
+    for fotmatted_defentry in fotmatted_defentries:
+        "print(fotmatted_defentry)"
 
-testgetlocalpage()
+    savetocsv(fotmatted_defentries,"w")
+
+getDefFrom_localpage()
