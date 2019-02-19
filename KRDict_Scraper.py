@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import csv
-
+import urllib.request
 
 def testgetwebpage():
     page = requests.get("https://krdict.korean.go.kr/jpn/dicSearchDetail/searchDetailWordsResult?nation=jpn&nationCode=7&searchFlag=Y&sort=W&currentPage=1&ParaWordNo=&syllablePosition=&actCategoryList=&all_gubun=ALL&gubun=W&gubun=P&gubun=E&all_wordNativeCode=ALL&wordNativeCode=1&wordNativeCode=2&wordNativeCode=3&wordNativeCode=0&sp_code=14&all_imcnt=ALL&imcnt=1&imcnt=2&imcnt=3&imcnt=0&all_multimedia=ALL&multimedia=P&multimedia=I&multimedia=V&multimedia=A&multimedia=S&multimedia=N&searchSyllableStart=&searchSyllableEnd=&searchOp=AND&searchTarget=word&searchOrglanguage=-1&wordCondition=wordAll&query=&blockCount=100")
@@ -121,4 +121,4 @@ def getDefFrom_localpage():
 
     savetocsv(fotmatted_defentries,"w")
 
-getDefFrom_localpage()
+"getDefFrom_localpage()"
