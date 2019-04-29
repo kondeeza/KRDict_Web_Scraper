@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import csv
+import re
 import urllib.request
 
 def testgetwebpage():
@@ -29,16 +30,19 @@ def savetocsv(fotmatted_defentries,mode):
     with open("index.csv", mode, encoding="utf-8", newline='') as csv_file:
         writer = csv.writer(csv_file, delimiter='\t')
         if (mode=='w'):
-            writer.writerow(['word', 'jp_defs','pos', 'hanja', 'jp_trans', 'kr_trans'])
+            writer.writerow(['word', 'jp_defs','pos', 'hanja', 'jp_trans', 'kr_trans', 'freq'])
 
         for defentry in fotmatted_defentries:
             "print(defentry)"
-            "writer.writerow([defentry['word'], defentry['jp_defs'], defentry['pos'], defentry['hanja'], defentry['jp_trans'], defentry['kr_trans'] ])"
-            writer.writerow([defentry['word'], defentry['jp_defs'], defentry['pos'], defentry['hanja'], defentry['jp_trans'] ])
+            writer.writerow([defentry['word'], defentry['jp_defs'], defentry['pos'], defentry['hanja'], defentry['jp_trans'], defentry['kr_trans'], defentry['freq'] ])
+            "writer.writerow([defentry['word'], defentry['jp_defs'], defentry['pos'], defentry['hanja'], defentry['jp_trans'] ])"
 
 
 
 def setJP_def(defentry_parent):
+    """IF THIS FUNCTION DOESN't WOTK, try below code :
+     jpdefs = defentry_parent.find_all('p', {'class': 'manyLang7 theme1 '})"
+    """
     """
     :param defentry_parent example:
     <li>
@@ -55,8 +59,9 @@ def setJP_def(defentry_parent):
         </ol>
     </li>
     """
-    jpdefs = defentry_parent.find_all('p', {'class': 'manyLang7 theme1 '})
+    jpdefs = defentry_parent.find_all('p', {'class': 'manyLang7 theme1'})
     formatted_jpdefs = ""
+    "print(jpdefs)"
     if jpdefs:
         for jpdef in jpdefs:
             if formatted_jpdefs:
@@ -97,8 +102,28 @@ def setHanja(defentry):
     return ""
 
 
+def setFreq(defentry):
+    #print(defentry.parent)
+    result = defentry.parent.find("span", {"class" : re.compile('score_.*')})
+
+    if result:
+        result = result["class"]
+        #print(result)
+        if result == ["score_1"]:
+            result = "★"
+        elif result == ["score_2"]:
+            result = "★★"
+        elif result == ["score_3"]:
+            result = "★★★"
+        else:
+            result = result
+
+        return result
+    return ""
+
 def getDefFrom_localpage():
-    soup = BeautifulSoup(open("KRDict_JP_All_Except_Noun_Verb_Eomi_PartOfSpeech_.htm", 'r', encoding="utf-8"), "html.parser")
+    soup = BeautifulSoup(open("KRDict complete\Japanese\韓国語－日本語辞典 - 条件指定_10k_p6.htm", 'r', encoding="utf-8"), "html.parser")
+    #soup = BeautifulSoup(open("KrDict_General_sample.htm", 'r', encoding="utf-8"), "html.parser")
     defdiv = soup.find('ul', {'class': 'search_list'})
     fotmatted_defentries = []
     defentries = soup.find_all('a', {'title': '詳細表示'})
@@ -111,14 +136,15 @@ def getDefFrom_localpage():
         defobj['jp_defs'] = setJP_def(defentry_parent)
         defobj['jp_trans'] = setJP_translation(defentry_parent)
         defobj['kr_trans'] = setKR_translation(defentry_parent)
+        defobj['freq'] = setFreq(defentry)
 
-
+        #print(defobj)
         fotmatted_defentries.append(defobj)
-        "print(defobj)"
 
+    """
     for fotmatted_defentry in fotmatted_defentries:
-        "print(fotmatted_defentry)"
+        print(fotmatted_defentry)"""
 
     savetocsv(fotmatted_defentries,"w")
 
-"getDefFrom_localpage()"
+getDefFrom_localpage()
